@@ -1,57 +1,103 @@
-# Sample Hardhat 3 Beta Project (`node:test` and `viem`)
+# CRO Casino           
 
-This project showcases a Hardhat 3 Beta project using the native Node.js test runner (`node:test`) and the `viem` library for Ethereum interactions.
+A decentralized casino smart contract built on Solidity that offers simple 50/50 betting games. Players stake ETH and have a chance to double their money based on blockchain randomness.
 
-To learn more about the Hardhat 3 Beta, please visit the [Getting Started guide](https://hardhat.org/docs/getting-started#getting-started-with-hardhat-3). To share your feedback, join our [Hardhat 3 Beta](https://hardhat.org/hardhat3-beta-telegram-group) Telegram group or [open an issue](https://github.com/NomicFoundation/hardhat/issues/new) in our GitHub issue tracker.
+## How It Works
 
-## Project Overview
+1. **Place Bet**: Send ETH to the contract to place your bet
+2. **Wait**: The contract schedules your bet resolution 128 blocks in the future
+3. **Resolve**: Call the contract again after the waiting period to resolve your bet
+4. **Win/Lose**: 50% chance to win double your stake based on `block.prevrandao`
 
-This example project includes:
+## Game Mechanics
 
-- A simple Hardhat configuration file.
-- Foundry-compatible Solidity unit tests.
-- TypeScript integration tests using [`node:test`](nodejs.org/api/test.html), the new Node.js native test runner, and [`viem`](https://viem.sh/).
-- Examples demonstrating how to connect to different types of networks, including locally simulating OP mainnet.
+- **Bet Placement**: Send any amount of ETH to place a bet
+- **Waiting Period**: 128 blocks (~25-30 minutes on most networks)
+- **Win Condition**: Even `block.prevrandao` = Win, Odd = Lose
+- **Payout**: Winners receive 2x their original stake
+- **History**: Contract tracks the last 3 winners
 
-## Usage
+## Contract Features
 
-### Running Tests
+- **Automatic Betting**: Send ETH directly to the contract via the `receive()` function
+- **Manual Betting**: Call `playGame()` directly with ETH
+- **Winner Tracking**: View recent winners with `lastThreeWinners`
+- **Transparent**: All game logic is on-chain and verifiable
 
-To run all the tests in the project, execute the following command:
+## Quick Start
 
-```shell
+### Prerequisites
+
+- Node.js 18+
+- Hardhat
+- MetaMask or compatible wallet
+
+### Installation
+
+```bash
+npm install
+```
+
+### Testing
+
+```bash
 npx hardhat test
 ```
 
-You can also selectively run the Solidity or `node:test` tests:
+### Deployment
 
-```shell
-npx hardhat test solidity
-npx hardhat test nodejs
+Deploy to local network:
+
+```bash
+npx hardhat ignition deploy ignition/modules/Casino.ts
 ```
 
-### Make a deployment to Sepolia
+Deploy to testnet (e.g., Sepolia):
 
-This project includes an example Ignition module to deploy the contract. You can deploy this module to a locally simulated chain or to Sepolia.
-
-To run the deployment to a local chain:
-
-```shell
-npx hardhat ignition deploy ignition/modules/Counter.ts
+```bash
+npx hardhat ignition deploy --network sepolia ignition/modules/Casino.ts
 ```
 
-To run the deployment to Sepolia, you need an account with funds to send the transaction. The provided Hardhat configuration includes a Configuration Variable called `SEPOLIA_PRIVATE_KEY`, which you can use to set the private key of the account you want to use.
+## Contract Interface
 
-You can set the `SEPOLIA_PRIVATE_KEY` variable using the `hardhat-keystore` plugin or by setting it as an environment variable.
+### Main Functions
 
-To set the `SEPOLIA_PRIVATE_KEY` config variable using `hardhat-keystore`:
+- `playGame()` - Place a bet or resolve an existing bet
+- `gameWieValues(address)` - View player's current stake
+- `blockNumbersToBeUsed(address)` - View when a bet can be resolved
+- `lastThreeWinners()` - View recent winners
 
-```shell
-npx hardhat keystore set SEPOLIA_PRIVATE_KEY
-```
+### Events
 
-After setting the variable, you can run the deployment with the Sepolia network:
+The contract automatically handles bet placement and resolution through the same function.
 
-```shell
-npx hardhat ignition deploy --network sepolia ignition/modules/Counter.ts
-```
+## Important Notes
+
+**This is an educational/experimental contract. Please be aware:**
+
+- Uses `block.prevrandao` for randomness (not cryptographically secure)
+- No access controls or admin functions
+- Contract must have sufficient ETH balance to pay winners
+- Always test on testnets before mainnet deployment
+
+## Built With
+
+- **Solidity ^0.8.19**
+- **Hardhat 3 Beta**
+- **TypeScript**
+- **Viem** for Ethereum interactions
+- **Node.js** native test runner
+
+## License
+
+MIT License - see LICENSE file for details
+
+## Contributing
+
+Contributions welcome! Please feel free to submit issues and pull requests.
+
+## Links
+
+- [Hardhat Documentation](https://hardhat.org/docs)
+- [Solidity Documentation](https://docs.soliditylang.org/)
+- [Viem Documentation](https://viem.sh/)
