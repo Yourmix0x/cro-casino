@@ -5,56 +5,42 @@ contract DecentralizedCasino {
     mapping(address => uint256) public gameWieValues;
     mapping(address => uint256) public blockNumbersToBeUsed;
 
-    address public bank;
+    address[] public lastThreeWinners;
 
-    bytes32 public userCommitment;
-    bytes32 public bankCommitment;
-
-    uint256 public userNumber;
-    uint256 public bankNumber;
-
-    function fundBank() external payable {}
-
-    function setUserCommitment(bytes32 commitment) external payable {
-        require(userCommitment == 0x0);
-        userCommitment = commitment;
-    }
-
-    function revealUserNumber(uint256 number) external {
-        require(keccak256(abi.encodePacked(number)) == userCommitment);
-        userNumber = number;
-    }
-
-    function setBankCommitment(bytes32 commitment) external {
-        require(bankCommitment == 0x0);
-        bankCommitment = commitment;
-    }
-
-    function revealBankNumber(uint256 number) external {
-        require(keccak256(abi.encodePacked(number)) == bankCommitment);
-        bankNumber = number;
-    }
-
-    function playGame() external payable {
+    function playGame() public payable {
         uint256 blockNumberToBeUsed = blockNumbersToBeUsed[msg.sender];
 
         if (blockNumberToBeUsed == 0) {
-            blockNumbersToBeUsed[msg.sender] = block.number + 2;
+            blockNumbersToBeUsed[msg.sender] = block.number + 128;
             gameWieValues[msg.sender] = msg.value;
             return;
         }
 
         require(block.number >= blockNumbersToBeUsed[msg.sender], "Too early");
 
-        uint256 randomNumber = bankNumber | userNumber; // XOR
+        uint256 randomNumber = block.prevrandao;
 
         if (randomNumber % 2 == 0) {
             uint256 winningAmount = gameWieValues[msg.sender] * 2;
             (bool success, ) = msg.sender.call{value: winningAmount}("");
             require(success, "Transfer failed");
+
+            lastThreeWinners.push(msg.sender);
+
+            if(lastThreeWinners.length > 3) {
+                for (uint256 i = 0; i < lastThreeWinners.length - 1; i++) {
+                    lastThreeWinners[i] = lastThreeWinners[i + 1];
+                }
+                lastThreeWinners.pop();
+            }
         }
 
         blockNumbersToBeUsed[msg.sender] = 0;
         gameWieValues[msg.sender] = 0;
     }
+
+    receive() external payable {
+        playGame();
+    }
 }
+;
